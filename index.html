@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>店舖業績總表</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0d0f14; --surface:#161820; --surface2:#1e2028;
+  --border:#2a2d38; --accent:#f0b429; --accent2:#e8635a;
+  --accent3:#4ecdc4; --accent4:#a78bfa; --text:#e8eaf0;
+  --text2:#8b8fa8; --green:#56cf8a; --red:#e8635a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;min-height:100vh}
+
+header{
+  padding:18px 28px; border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:100;
+  background:rgba(13,15,20,.95);backdrop-filter:blur(14px);
+}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-icon{width:34px;height:34px;background:var(--accent);border-radius:8px;display:grid;place-items:center;font-size:17px}
+.logo-text{font-size:16px;font-weight:700}
+.logo-sub{font-size:10.5px;color:var(--text2);font-family:'DM Mono',monospace}
+#hRight{text-align:right;font-family:'DM Mono',monospace;font-size:11.5px;color:var(--text2);line-height:1.8}
+#hRight span{color:var(--accent);font-weight:600}
+
+main{padding:24px 28px 60px;max-width:1440px;margin:0 auto}
+
+/* UPLOAD */
+.upload-zone{
+  border:2px dashed var(--border);border-radius:16px;
+  padding:44px 24px;text-align:center;margin-bottom:28px;
+  transition:border-color .2s,background .2s;cursor:pointer;
+  background:var(--surface);
+}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--accent);background:rgba(240,180,41,.04)}
+.up-icon{font-size:42px;margin-bottom:12px}
+.up-title{font-size:16px;font-weight:700;margin-bottom:8px}
+.up-sub{font-size:13px;color:var(--text2);line-height:1.8}
+.up-sub code{background:var(--surface2);padding:2px 7px;border-radius:4px;font-family:'DM Mono',monospace;font-size:12px;color:var(--accent3)}
+#fileInput{display:none}
+.btn-up{
+  display:inline-block;margin-top:18px;
+  background:var(--accent);color:#0d0f14;
+  padding:10px 30px;border-radius:8px;
+  font-size:13px;font-weight:700;cursor:pointer;border:none;
+  font-family:'Noto Sans TC',sans-serif;transition:all .15s;
+}
+.btn-up:hover{background:#f5c842;transform:translateY(-1px)}
+
+.file-bar{
+  display:none;align-items:center;justify-content:space-between;
+  background:rgba(86,207,138,.07);border:1px solid rgba(86,207,138,.2);
+  border-radius:10px;padding:13px 18px;margin-bottom:22px;
+}
+.file-bar.show{display:flex}
+.fb-name{font-size:13px;font-weight:700;color:var(--green)}
+.fb-meta{font-size:11.5px;color:var(--text2);font-family:'DM Mono',monospace;margin-top:2px}
+.btn-re{background:var(--surface2);color:var(--text2);border:1px solid var(--border);border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Noto Sans TC',sans-serif}
+.btn-re:hover{color:var(--text)}
+
+/* CONTROLS */
+.ctrl-bar{display:none;align-items:center;gap:10px;margin-bottom:22px;flex-wrap:wrap}
+.ctrl-label{font-size:12px;color:var(--text2)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{padding:6px 15px;border-radius:20px;font-size:12.5px;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--text2);transition:all .15s;font-family:'Noto Sans TC',sans-serif}
+.tab.active,.tab:hover{background:var(--accent);color:#0d0f14;border-color:var(--accent);font-weight:700}
+.vtabs .tab.active{background:var(--surface);color:var(--text);border-color:var(--text2);font-weight:500}
+.spacer{flex:1}
+
+/* KPI */
+.sec-label{font-size:10.5px;color:var(--text2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;font-family:'DM Mono',monospace}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:13px;margin-bottom:22px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:17px 19px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--kpi-color,var(--accent));border-radius:3px 0 0 3px}
+.kpi-l{font-size:10.5px;color:var(--text2);letter-spacing:.5px;text-transform:uppercase}
+.kpi-v{font-size:22px;font-weight:900;margin:5px 0 3px;font-family:'DM Mono',monospace;color:var(--kpi-color,var(--accent))}
+.kpi-s{font-size:11px;color:var(--text2)}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:18px}
+@media(max-width:900px){.g2,.g3{grid-template-columns:1fr}}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 22px}
+.card-t{font-size:13px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.dot{width:7px;height:7px;border-radius:50%}
+
+/* TABLES */
+.dt{width:100%;border-collapse:collapse}
+.dt th{font-size:10.5px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;text-align:right;padding:0 6px 11px;border-bottom:1px solid var(--border);font-weight:500;white-space:nowrap}
+.dt th:first-child{text-align:left}
+.dt td{padding:9px 6px;border-bottom:1px solid rgba(42,45,56,.45);font-size:12.5px;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap}
+.dt td:first-child{text-align:left;font-family:'Noto Sans TC',sans-serif;font-weight:600}
+.dt tr:last-child td{border-bottom:none}
+.dt tr.total-row td{border-top:1px solid var(--border);font-weight:700;padding-top:12px}
+
+/* RANK */
+.rn{width:24px;height:24px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:'DM Mono',monospace;background:var(--surface2);color:var(--text2)}
+.rn.t1{background:rgba(240,180,41,.2);color:var(--accent)}
+.rn.t2{background:rgba(232,99,90,.15);color:var(--accent2)}
+.rn.t3{background:rgba(78,205,196,.15);color:var(--accent3)}
+
+/* PROGRESS */
+.pl{display:flex;flex-direction:column;gap:13px}
+.pt{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.pn{font-size:13px;font-weight:600}
+.pp{font-size:12px;font-family:'DM Mono',monospace;font-weight:700}
+.pbg{height:7px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.pf{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.pm{display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--text2);font-family:'DM Mono',monospace}
+
+/* CASH */
+.cash-tag{font-size:10.5px;padding:2px 8px;border-radius:12px;font-family:'Noto Sans TC',sans-serif;font-weight:600}
+.tag-ok{background:rgba(86,207,138,.12);color:var(--green)}
+.tag-ab{background:rgba(232,99,90,.12);color:var(--red)}
+.tag-na{background:rgba(139,143,168,.1);color:var(--text2)}
+
+/* CHART */
+.cw{position:relative}
+.empty{text-align:center;padding:40px 0;color:var(--text2);font-size:13px}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+<script src="chart.umd.min.js"></script>
+<script src="xlsx.full.min.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">📊</div>
+    <div>
+      <div class="logo-text">店舖業績總表</div>
+      <div class="logo-sub">STORE PERFORMANCE DASHBOARD</div>
+    </div>
+  </div>
+  <div id="hRight">更新時間<br><span id="nowTime">—</span></div>
+</header>
+
+<main>
+
+  <!-- UPLOAD -->
+  <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+    <div class="up-icon">📂</div>
+    <div class="up-title">拖曳或點擊上傳 Excel</div>
+    <div class="up-sub">直接上傳月份 xlsx，自動讀取所有分店資料</div>
+    <button class="btn-up" onclick="event.stopPropagation();document.getElementById('fileInput').click()">選擇 Excel 檔案</button>
+    <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
+  </div>
+
+  <div class="file-bar" id="fileBar">
+    <div>
+      <div class="fb-name" id="fbName">—</div>
+      <div class="fb-meta" id="fbMeta">—</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-re" onclick="document.getElementById('fileInput').click()">＋ 加入其他月份</button>
+      <button class="btn-re" style="color:var(--red);border-color:rgba(232,99,90,.3)" onclick="resetAll()">清除重來</button>
+    </div>
+  </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-re" onclick="startGoogleAuth()">＋ Google Drive</button>
+      <button class="btn-re" onclick="document.getElementById('fileInput').click()">＋ 本機檔案</button>
+      <button class="btn-re" style="color:var(--red);border-color:rgba(232,99,90,.3)" onclick="resetAll()">清除重來</button>
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="ctrl-bar" id="ctrlBar">
+    <span class="ctrl-label">月份</span>
+    <div class="tabs" id="mTabs"></div>
+  </div>
+
+  <!-- BODY (hidden until file loaded) -->
+  <div id="body" style="display:none">
+
+    <!-- ANNUAL SECTION -->
+    <div class="sec-label" id="annualLabel" style="display:none">年度概況</div>
+    <div id="annualSection" style="display:none">
+      <!-- Annual KPI -->
+      <div class="kpi-row" style="margin-bottom:18px">
+        <div class="kpi" style="--kpi-color:var(--accent)">
+          <div class="kpi-l">年度累積營收</div>
+          <div class="kpi-v" id="ya1">—</div>
+          <div class="kpi-s" id="ya1s">全年目標 —</div>
+        </div>
+        <div class="kpi" style="--kpi-color:var(--green)">
+          <div class="kpi-l">年度達成率</div>
+          <div class="kpi-v" id="ya2">—</div>
+          <div class="kpi-s" id="ya2s">—</div>
+        </div>
+        <div class="kpi" style="--kpi-color:var(--accent3)">
+          <div class="kpi-l">已載入月份</div>
+          <div class="kpi-v" id="ya3">—</div>
+          <div class="kpi-s" id="ya3s">月份資料</div>
+        </div>
+        <div class="kpi" style="--kpi-color:var(--accent4)">
+          <div class="kpi-l">月均營收</div>
+          <div class="kpi-v" id="ya4">—</div>
+          <div class="kpi-s" id="ya4s">已載入月份平均</div>
+        </div>
+      </div>
+
+      <!-- Annual charts row -->
+      <div class="g2" style="margin-bottom:18px">
+        <div class="card">
+          <div class="card-t"><span class="dot" style="background:var(--accent)"></span>各月營收趨勢</div>
+          <div class="cw" style="height:240px"><canvas id="monthRevChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-t"><span class="dot" style="background:var(--green)"></span>各店年度達成率</div>
+          <div class="pl" id="annualProgArea"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIVIDER -->
+    <div class="sec-label">本月明細</div>
+
+    <!-- KPI -->
+    <div class="sec-label" style="display:none">整體概況</div>
+    <div class="kpi-row">
+      <div class="kpi" style="--kpi-color:var(--accent)">
+        <div class="kpi-l">本月累計營收</div>
+        <div class="kpi-v" id="k1">—</div>
+        <div class="kpi-s" id="k1s">月目標 —</div>
+      </div>
+      <div class="kpi" style="--kpi-color:var(--green)">
+        <div class="kpi-l">整體達成率</div>
+        <div class="kpi-v" id="k2">—</div>
+        <div class="kpi-s" id="k2s">—</div>
+      </div>
+      <div class="kpi" style="--kpi-color:var(--accent3)">
+        <div class="kpi-l">累計來客數</div>
+        <div class="kpi-v" id="k3">—</div>
+        <div class="kpi-s" id="k3s">今月合計</div>
+      </div>
+      <div class="kpi" style="--kpi-color:var(--accent4)">
+        <div class="kpi-l">平均客單價</div>
+        <div class="kpi-v" id="k4">—</div>
+        <div class="kpi-s" id="k4s">集團平均</div>
+      </div>
+      <div class="kpi" style="--kpi-color:var(--accent2)">
+        <div class="kpi-l">現金短溢異常</div>
+        <div class="kpi-v" id="k5">—</div>
+        <div class="kpi-s" id="k5s">本月累計</div>
+      </div>
+    </div>
+
+    <!-- ROW 1: Ranking + Progress -->
+    <div class="g2">
+      <div class="card">
+        <div class="card-t"><span class="dot" style="background:var(--accent)"></span>營收排名</div>
+        <div id="rankArea"></div>
+      </div>
+      <div class="card">
+        <div class="card-t"><span class="dot" style="background:var(--green)"></span>目標達成率</div>
+        <div class="pl" id="progArea"></div>
+      </div>
+    </div>
+
+    <!-- ROW 2: Daily trend + AOV -->
+    <div class="g2">
+      <div class="card">
+        <div class="card-t"><span class="dot" style="background:var(--accent)"></span>每日營收趨勢</div>
+        <div class="cw" style="height:250px"><canvas id="tRevChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-t"><span class="dot" style="background:var(--accent4)"></span>每日客單價走勢</div>
+        <div class="cw" style="height:250px"><canvas id="aovChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ROW 3: Visitors trend + coming days -->
+    <div class="g2">
+      <div class="card">
+        <div class="card-t"><span class="dot" style="background:var(--accent3)"></span>每日來客數趨勢</div>
+        <div class="cw" style="height:250px"><canvas id="tVisChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-t"><span class="dot" style="background:var(--accent2)"></span>各店來客數比較</div>
+        <div class="cw" style="height:250px"><canvas id="visChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ROW 4: Cash -->
+    <div class="sec-label" style="margin-top:6px">應存現金明細</div>
+    <div class="card" style="margin-bottom:18px">
+      <div style="overflow-x:auto" id="cashArea"></div>
+    </div>
+
+    <!-- ROW 5: Daily table -->
+    <div class="sec-label">每日營收明細</div>
+    <div class="card">
+      <div style="overflow-x:auto" id="dailyArea"></div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+// ─── STORE CONFIG ─────────────────────────────────────────
+const STORES = [
+  { name:'安和',   sheet:'八和',         revCol:6,  cashCol:13, cashShortCol:10, cashRecvCol:5,  visIdx:2 },
+  { name:'敦北',   sheet:'敦北',         revCol:6,  cashCol:13, cashShortCol:10, cashRecvCol:5,  visIdx:3 },
+  { name:'台中',   sheet:'台中',         revCol:9,  cashCol:18, cashShortCol:15, cashRecvCol:6,  visIdx:4 },
+  { name:'信義A9', sheet:'黑武士A9',     revCol:5,  cashCol:null,cashShortCol:3, cashRecvCol:1,  visIdx:5 },
+  { name:'忠孝',   sheet:'黑武士(本店)', revCol:8,  cashCol:18, cashShortCol:14, cashRecvCol:5,  visIdx:6 },
+  { name:'SSAM',   sheet:'山畝',         revCol:7,  cashCol:16, cashShortCol:13, cashRecvCol:5,  visIdx:7 },
+];
+const PAL = ['#f0b429','#e8635a','#4ecdc4','#a78bfa','#56cf8a','#f97316'];
+const WD  = ['日','一','二','三','四','五','六'];
+const CNMON = ['一','二','三','四','五','六','七','八','九','十','十一','十二'];
+
+// ─── STATE ────────────────────────────────────────────────
+let wb=null, parsed={}, activeMonth=null, charts={};
+
+// ─── DRAG & DROP ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  const uz=document.getElementById('uploadZone');
+  if(!uz) return;
+  uz.addEventListener('dragover',e=>{e.preventDefault();uz.classList.add('drag-over')});
+  uz.addEventListener('dragleave',()=>uz.classList.remove('drag-over'));
+  uz.addEventListener('drop',e=>{e.preventDefault();uz.classList.remove('drag-over');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])});
+});
+
+function handleFile(f){
+  if(!f)return;
+  new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=e=>res(e.target.result);
+    r.onerror=()=>rej(new Error('讀取失敗'));
+    r.readAsArrayBuffer(f);
+  }).then(buf=>{
+    wb=XLSX.read(buf,{type:'array',cellDates:true});
+    parseWB(f.name);
+  }).catch(e=>alert(e.message));
+}
+
+// ─── PARSE ────────────────────────────────────────────────
+// 每次呼叫都「累加」資料，不覆蓋舊月份
+// 所以可以一個一個拖入 1月、2月、3月、4月...
+let allRevByDate={}, allVisByDate={}, allCashByDate={}, allShortByDate={};
+let allMonthTargets={};
+let loadedFiles=[];
+
+function parseWB(fname){
+  const TGT_ORDER=[1,2,3,5,4,6];
+  const REV_COLS=[2,4,6,8,10,12];
+
+  // ── 1. 月目標（每次都更新，後上傳的蓋前面）──────────────
+  const tgtRows=toArr(wb.Sheets['預估營業額']);
+  for(let r=1;r<tgtRows.length;r++){
+    const row=tgtRows[r];
+    const lbl=String(row[0]||'').replace(/\s/g,'');
+    let mn=0;
+    CNMON.forEach((cn,i)=>{ if(lbl===cn+'月') mn=i+1; });
+    if(mn>0) allMonthTargets[mn]=TGT_ORDER.map(c=>pn(row[c]));
+  }
+
+  // ── 2. 來客數（累加進 allVisByDate）────────────────────
+  const visRows=toArr(wb.Sheets['來客數']);
+  for(let r=2;r<visRows.length;r++){
+    const row=visRows[r];
+    const dt=pd(row[0]);if(!dt)continue;
+    const vals=[2,3,4,5,6,7].map(c=>pn(row[c]));
+    if(vals.some(v=>v>0)) allVisByDate[dk(dt)]=vals;
+  }
+
+  // ── 3. 營收（累加進 allRevByDate）──────────────────────
+  const ovRows=toArr(wb.Sheets['營業額總覽']);
+  for(let r=2;r<ovRows.length;r++){
+    const row=ovRows[r];
+    const dt=pd(row[0]);if(!dt)continue;
+    const vals=REV_COLS.map(c=>pn(row[c]));
+    if(vals.some(v=>v>0)) allRevByDate[dk(dt)]=vals;
+  }
+
+  // ── 4. 現金（累加進 allCashByDate / allShortByDate）────
+  const dateOrder=[];
+  for(let r=2;r<ovRows.length;r++){
+    const dt=pd(ovRows[r][0]);
+    if(dt) dateOrder.push(dk(dt));
+  }
+  STORES.forEach((s,si)=>{
+    const sh=wb.Sheets[s.sheet];if(!sh)return;
+    const rows=toArr(sh);
+    for(let r=1;r<rows.length&&(r-1)<dateOrder.length;r++){
+      const key=dateOrder[r-1];
+      if(!allCashByDate[key])  allCashByDate[key] =new Array(6).fill(null);
+      if(!allShortByDate[key]) allShortByDate[key]=new Array(6).fill(0);
+      if(s.cashCol!==null){
+        const cv=pn(rows[r][s.cashCol]);
+        if(cv>0) allCashByDate[key][si]=cv;
+      }
+      allShortByDate[key][si]=pn(rows[r][s.cashShortCol]);
+    }
+  });
+
+  // ── 5. 重建 parsed（從全域資料重組月份）───────────────
+  parsed={};
+  const months={};
+  Object.keys(allRevByDate).sort().forEach(key=>{
+    const [y,m]=key.split('-').map(Number);
+    const mk=`${y}-${String(m).padStart(2,'0')}`;
+    if(!months[mk])months[mk]={year:y,month:m,dates:[]};
+    months[mk].dates.push(key);
+  });
+  Object.keys(months).forEach(mk=>{
+    const {year,month,dates}=months[mk];
+    parsed[mk]={year,month,dates,
+      revByDate:allRevByDate, visByDate:allVisByDate,
+      cashByDate:allCashByDate, shortByDate:allShortByDate,
+      targets:allMonthTargets[month]||new Array(6).fill(0)};
+  });
+
+  const mks=Object.keys(parsed).sort();
+  if(!mks.length){alert('找不到營收資料，請確認檔案格式正確');return;}
+
+  // 新上傳的檔案：跳到它的月份
+  loadedFiles.push(fname);
+  const newMk=mks[mks.length-1]; // 預設跳最新月份
+  activeMonth=newMk;
+
+  // ── 6. UI ──────────────────────────────────────────────
+  document.getElementById('uploadZone').style.display='none';
+  document.getElementById('fileBar').classList.add('show');
+  document.getElementById('fbName').textContent=
+    '✓ 已載入：'+loadedFiles.join('、');
+  document.getElementById('fbMeta').textContent=
+    `${mks.length} 個月份 · ${Object.keys(allRevByDate).length} 天有效資料`;
+  document.getElementById('nowTime').textContent=new Date().toLocaleString('zh-TW',{hour12:false});
+  document.getElementById('ctrlBar').style.display='flex';
+  document.getElementById('body').style.display='block';
+  buildTabs(mks);
+  render(activeMonth);
+}
+
+function resetAll(){
+  allRevByDate={}; allVisByDate={}; allCashByDate={}; allShortByDate={};
+  allMonthTargets={}; loadedFiles=[]; parsed={}; activeMonth=null;
+  Object.values(charts).forEach(c=>c.destroy()); charts={};
+  document.getElementById('fileBar').classList.remove('show');
+  document.getElementById('ctrlBar').style.display='none';
+  document.getElementById('body').style.display='none';
+  document.getElementById('mTabs').innerHTML='';
+  document.getElementById('annualLabel').style.display='none';
+  document.getElementById('annualSection').style.display='none';
+  document.getElementById('uploadZone').style.display='block';
+}
+
+function buildTabs(mks){
+  const el=document.getElementById('mTabs');el.innerHTML='';
+  mks.forEach(mk=>{
+    const {month}=parsed[mk];
+    const btn=document.createElement('button');
+    btn.className='tab'+(mk===activeMonth?' active':'');
+    btn.textContent=CNMON[month-1]+'月';
+    btn.onclick=()=>{
+      document.querySelectorAll('#mTabs .tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');activeMonth=mk;render(mk);
+    };
+    el.appendChild(btn);
+  });
+  renderAnnual(mks);
+}
+
+// ─── ANNUAL ───────────────────────────────────────────────
+function renderAnnual(mks){
+  if(mks.length<1) return;
+  document.getElementById('annualLabel').style.display='block';
+  document.getElementById('annualSection').style.display='block';
+
+  const TGT_ORDER=[1,2,3,5,4,6]; // STORES→預估 col 對應
+
+  // 年度各店累積營收
+  const yearRevByStore=new Array(6).fill(0);
+  // 年度全年目標（從 allMonthTargets 加總 1~12 月）
+  const yearTgtByStore=new Array(6).fill(0);
+  Object.keys(allMonthTargets).forEach(m=>{
+    allMonthTargets[m].forEach((v,i)=>{ yearTgtByStore[i]+=v; });
+  });
+
+  // 各月營收（用於折線圖）
+  const monthRevTotals={}; // mk → 集團合計
+  mks.forEach(mk=>{
+    const d=parsed[mk];
+    let tot=0;
+    d.dates.forEach(key=>{
+      const rev=d.revByDate[key]||[];
+      rev.forEach((v,i)=>{ if(v>0){ yearRevByStore[i]+=v; tot+=v; } });
+    });
+    monthRevTotals[mk]=tot;
+  });
+
+  const yearTotalRev=yearRevByStore.reduce((s,v)=>s+v,0);
+  const yearTotalTgt=yearTgtByStore.reduce((s,v)=>s+v,0);
+  const yearAchieve=yearTotalTgt>0?Math.round(yearTotalRev/yearTotalTgt*100):0;
+  const monthCount=mks.length;
+  const monthAvg=monthCount>0?Math.round(yearTotalRev/monthCount):0;
+
+  // KPI
+  V('ya1',fmt(yearTotalRev));
+  V('ya1s','全年目標 '+fmt(yearTotalTgt));
+  const ya2=document.getElementById('ya2');
+  ya2.textContent=yearAchieve+'%';
+  ya2.style.color=yearAchieve>=100?'var(--green)':yearAchieve>=70?'var(--accent)':'var(--red)';
+  V('ya2s',yearAchieve>=100?'✦ 達標':'差 '+fmt(yearTotalTgt-yearTotalRev));
+  V('ya3',mks.map(mk=>CNMON[parsed[mk].month-1]+'月').join('、'));
+  V('ya3s',`共 ${monthCount} 個月`);
+  V('ya4',fmt(monthAvg));
+
+  // 各月營收長條圖
+  const sortedMks=mks.slice().sort();
+  const mLabels=sortedMks.map(mk=>CNMON[parsed[mk].month-1]+'月');
+  const mRevs=sortedMks.map(mk=>monthRevTotals[mk]||0);
+  const mTgts=sortedMks.map(mk=>{
+    const tgts=allMonthTargets[parsed[mk].month]||new Array(6).fill(0);
+    return tgts.reduce((s,v)=>s+v,0);
+  });
+  mkChart('monthRevChart',{type:'bar',
+    data:{labels:mLabels, datasets:[
+      {label:'月目標', data:mTgts,
+       backgroundColor:'rgba(240,180,41,.12)', borderColor:'rgba(240,180,41,.4)',
+       borderWidth:1, borderRadius:3},
+      {label:'實際', data:mRevs,
+       backgroundColor:mRevs.map((r,i)=>r>=(mTgts[i]||0)?'rgba(86,207,138,.7)':'rgba(240,180,41,.7)'),
+       borderColor:mRevs.map((r,i)=>r>=(mTgts[i]||0)?'#56cf8a':'#f0b429'),
+       borderWidth:1, borderRadius:3}
+    ]},
+    options:{...co(),
+      plugins:{...co().plugins,
+        legend:{display:true,labels:{color:'#8b8fa8',font:{size:11},boxWidth:11}}
+      }
+    }
+  });
+
+  // 各店年度達成率進度條
+  let ph='';
+  const storesSorted=[...STORES.map((s,i)=>({
+    name:s.name, rev:yearRevByStore[i], tgt:yearTgtByStore[i],
+    pct:yearTgtByStore[i]>0?Math.round(yearRevByStore[i]/yearTgtByStore[i]*100):0
+  }))].sort((a,b)=>b.pct-a.pct);
+
+  storesSorted.forEach(({name,rev,tgt,pct})=>{
+    const bar=Math.min(pct,100);
+    const col=pct>=100?'var(--green)':pct>=70?'var(--accent)':'var(--red)';
+    ph+=`<div style="margin-bottom:12px">
+      <div class="pt"><span class="pn">${name}</span>
+        <span class="pp" style="color:${col}">${pct}%</span></div>
+      <div class="pbg"><div class="pf" style="width:${bar}%;background:${col}"></div></div>
+      <div class="pm"><span>累積 ${ff(rev)}</span><span>全年目標 ${ff(tgt)}</span></div>
+    </div>`;
+  });
+  document.getElementById('annualProgArea').innerHTML=ph;
+}
+
+// ─── RENDER ───────────────────────────────────────────────
+function render(mk){
+  const d=parsed[mk];if(!d)return;
+
+  const totRev=new Array(6).fill(0);
+  const totVis=new Array(6).fill(0);
+  const totShort=new Array(6).fill(0);
+  const lastCash=new Array(6).fill(null); // last non-null 應回存 per store
+
+  d.dates.forEach(key=>{
+    (d.revByDate[key]||[]).forEach((v,i)=>{if(v>0)totRev[i]+=v});
+    (d.visByDate[key]||[]).forEach((v,i)=>{if(v>0)totVis[i]+=v});
+    (d.shortByDate[key]||[]).forEach((v,i)=>{if(v)totShort[i]+=v});
+    (d.cashByDate[key]||[]).forEach((v,i)=>{if(v!==null&&v>0)lastCash[i]=v});
+  });
+
+  const sumRev=totRev.reduce((s,v)=>s+v,0);
+  const sumTgt=d.targets.reduce((s,v)=>s+v,0);
+  const sumVis=totVis.reduce((s,v)=>s+v,0);
+  const aovArr=STORES.map((_,i)=>totVis[i]>0?Math.round(totRev[i]/totVis[i]):0);
+  const avgAov=sumVis>0?Math.round(sumRev/sumVis):0;
+  const achieve=sumTgt>0?Math.round(sumRev/sumTgt*100):0;
+  const totalShort=totShort.reduce((s,v)=>s+v,0);
+
+  // KPI
+  V('k1',fmt(sumRev));V('k1s','月目標 '+fmt(sumTgt));
+  const k2=document.getElementById('k2');
+  k2.textContent=achieve+'%';
+  k2.style.color=achieve>=100?'var(--green)':achieve>=85?'var(--accent3)':achieve>=70?'var(--accent)':'var(--red)';
+  V('k2s',achieve>=100?'✦ 已達標':'差 '+fmt(sumTgt-sumRev));
+  V('k3',sumVis.toLocaleString());
+  V('k4','NT$'+avgAov.toLocaleString());
+  const k5=document.getElementById('k5');
+  k5.textContent=(totalShort>=0?'+':'')+totalShort.toLocaleString();
+  k5.style.color=totalShort===0?'var(--text2)':totalShort>0?'var(--accent)':'var(--red)';
+  V('k5s','短溢累計（+溢 −短）');
+
+  // Ranking
+  window._rankData=STORES.map((s,i)=>({name:s.name,rev:totRev[i],tgt:d.targets[i],pct:d.targets[i]>0?Math.round(totRev[i]/d.targets[i]*100):0}));
+  window._rankSort=window._rankSort||'rev';
+  renderRank();
+
+
+  // Progress（依達成率排序）
+  const progSorted=[...window._rankData].sort((a,b)=>b.pct-a.pct);
+  let ph='';
+  progSorted.forEach(({name,rev,tgt})=>{
+    const raw=tgt>0?Math.round(rev/tgt*100):0,pct=Math.min(raw,100);
+    const col=raw>=100?'var(--green)':raw>=85?'var(--accent3)':raw>=70?'var(--accent)':'var(--red)';
+    ph+=`<div><div class="pt"><span class="pn">${name}</span><span class="pp" style="color:${col}">${raw}%</span></div>
+    <div class="pbg"><div class="pf" style="width:${pct}%;background:${col}"></div></div>
+    <div class="pm"><span>實際 ${ff(rev)}</span><span>目標 ${ff(tgt)}</span></div></div>`;
+  });
+  document.getElementById('progArea').innerHTML=ph;
+
+  // 每日趨勢線圖（永遠顯示）
+  const tLabels=d.dates.map(key=>{
+    const dt=new Date(key);return`${dt.getMonth()+1}/${dt.getDate()}(${WD[dt.getDay()]})`;
+  });
+  const makeDS=(dataFn)=>STORES.map((s,i)=>({
+    label:s.name, data:d.dates.map(dataFn(i)),
+    borderColor:PAL[i], backgroundColor:PAL[i]+'22',
+    tension:.3, fill:false, borderWidth:2, pointRadius:3, pointHoverRadius:5
+  }));
+  const legendOpts={display:true,labels:{color:'#8b8fa8',font:{size:11},boxWidth:10,padding:12}};
+  mkChart('tRevChart',{type:'line',
+    data:{labels:tLabels,datasets:makeDS(i=>key=>(d.revByDate[key]||[])[i]||0)},
+    options:{...co(),plugins:{...co().plugins,legend:legendOpts}}
+  });
+  mkChart('tVisChart',{type:'line',
+    data:{labels:tLabels,datasets:makeDS(i=>key=>(d.visByDate[key]||[])[i]||0)},
+    options:{...co(),plugins:{...co().plugins,legend:legendOpts}}
+  });
+
+  // 來客數長條圖
+  mkChart('visChart',{type:'bar',
+    data:{labels:STORES.map(s=>s.name),datasets:[{
+      data:totVis, backgroundColor:PAL.map(c=>c+'bb'),
+      borderColor:PAL, borderWidth:1, borderRadius:3
+    }]},
+    options:co()
+  });
+
+  // 每日客單價走勢線圖（各店每日營收 ÷ 來客數）
+  const aovTrendDS=STORES.map((s,i)=>({
+    label:s.name,
+    data:d.dates.map(key=>{
+      const rev=(d.revByDate[key]||[])[i]||0;
+      const vis=(d.visByDate[key]||[])[i]||0;
+      return vis>0?Math.round(rev/vis):null;
+    }),
+    borderColor:PAL[i], backgroundColor:PAL[i]+'22',
+    tension:.3, fill:false, borderWidth:2,
+    pointRadius:3, pointHoverRadius:5,
+    spanGaps:false
+  }));
+  mkChart('aovChart',{type:'line',
+    data:{labels:tLabels, datasets:aovTrendDS},
+    options:{...co(),
+      plugins:{...co().plugins, legend:legendOpts},
+      scales:{...co().scales,
+        y:{...co().scales.y,
+          ticks:{...co().scales.y.ticks,
+            callback:v=>'$'+v.toLocaleString()
+          }
+        }
+      }
+    }
+  });
+
+  // ── CASH TABLE ──────────────────────────────────────────
+  // Show: 店名 | 累計現金應收 | 應回存(最新累計) | 現金短溢累計 | 狀態
+  const cashRecvTot=new Array(6).fill(0);
+  d.dates.forEach(key=>{
+    STORES.forEach((s,i)=>{
+      const row=(d.cashByDate[key]||[]); // 應回存 per day not incremental need raw
+    });
+  });
+  // 累計現金應收: from revByDate we need cash recv specifically
+  // Use shortByDate for anomaly; lastCash for 應回存
+  let ch='<table class="dt"><thead><tr><th>店舖</th><th>應回存總計</th><th>現金短溢累計</th><th>狀態</th></tr></thead><tbody>';
+  STORES.forEach((s,i)=>{
+    const cash=lastCash[i];
+    const shortSum=totShort[i];
+    const cashStr=cash!==null?ff(cash):'—';
+    const shortCol=shortSum===0?'var(--text2)':shortSum>0?'var(--accent)':'var(--red)';
+    const shortStr=shortSum===0?'0':(shortSum>0?'+':'')+shortSum.toLocaleString();
+    let tagHtml='';
+    if(s.cashCol===null){
+      tagHtml='<span class="cash-tag tag-na">刷卡為主</span>';
+    } else if(shortSum===0){
+      tagHtml='<span class="cash-tag tag-ok">正常</span>';
+    } else {
+      tagHtml=`<span class="cash-tag tag-ab">${shortSum>0?'溢出':'短缺'}</span>`;
+    }
+    ch+=`<tr><td>${s.name}</td><td>${cashStr}</td><td style="color:${shortCol};font-weight:600">${shortStr}</td><td>${tagHtml}</td></tr>`;
+  });
+  // Totals
+  const totalCash=lastCash.filter(v=>v!==null).reduce((s,v)=>s+v,0);
+  ch+=`<tr class="total-row"><td>集團合計</td><td style="color:var(--accent);font-weight:900">${ff(totalCash)}</td><td style="color:${totalShort===0?'var(--text2)':totalShort>0?'var(--accent)':'var(--red)'};font-weight:900">${totalShort===0?'0':(totalShort>0?'+':'')+totalShort.toLocaleString()}</td><td></td></tr>`;
+  ch+='</tbody></table>';
+  document.getElementById('cashArea').innerHTML=ch;
+
+  // ── DAILY TABLE ─────────────────────────────────────────
+  let dh='<table class="dt" style="font-size:12px"><thead><tr><th>日期</th>';
+  STORES.forEach(s=>{dh+=`<th>${s.name}</th>`});
+  dh+='<th>集團合計</th></tr></thead><tbody>';
+  d.dates.forEach(key=>{
+    const rev=d.revByDate[key]||new Array(6).fill(0);
+    const tot=rev.reduce((s,v)=>s+v,0);
+    if(tot===0)return;
+    const dt=new Date(key);
+    dh+=`<tr><td style="font-family:'DM Mono',monospace">${dt.getMonth()+1}/${dt.getDate()}(${WD[dt.getDay()]})</td>`;
+    rev.forEach(r=>{dh+=`<td>${r>0?ff(r):'—'}</td>`});
+    dh+=`<td style="color:var(--accent);font-weight:700">${ff(tot)}</td></tr>`;
+  });
+  dh+=`<tr class="total-row"><td style="font-family:'Noto Sans TC',sans-serif">月累計</td>`;
+  totRev.forEach(r=>{dh+=`<td style="color:var(--accent3);font-weight:600">${ff(r)}</td>`});
+  dh+=`<td style="color:var(--accent);font-weight:900">${ff(sumRev)}</td></tr>`;
+  dh+='</tbody></table>';
+  document.getElementById('dailyArea').innerHTML=dh;
+}
+
+// ─── RANK TABLE ───────────────────────────────────────────
+function renderRank(){
+  const data=[...window._rankData].sort((a,b)=>
+    window._rankSort==='rev'?b.rev-a.rev:b.pct-a.pct
+  );
+  const revActive=window._rankSort==='rev';
+  const thStyle=(active)=>active
+    ?'cursor:pointer;color:var(--accent);user-select:none'
+    :'cursor:pointer;color:var(--text2);user-select:none';
+  const arrow=(active,asc)=>active?(asc?'↑':'↓'):'↕';
+  let rh=`<table class="dt"><thead><tr>
+    <th>排</th><th>店舖</th>
+    <th style="${thStyle(revActive)}" onclick="setSortRank('rev')">累計營收 ${arrow(revActive,false)}</th>
+    <th style="${thStyle(!revActive)}" onclick="setSortRank('pct')">達成率 ${arrow(!revActive,false)}</th>
+  </tr></thead><tbody>`;
+  data.forEach(({name,rev,tgt,pct},ri)=>{
+    const cls=ri===0?'t1':ri===1?'t2':ri===2?'t3':'';
+    const col=pct>=100?'var(--green)':pct>=85?'var(--accent3)':pct>=70?'var(--accent)':'var(--red)';
+    rh+=`<tr><td><span class="rn ${cls}">${ri+1}</span></td><td>${name}</td><td>${ff(rev)}</td><td style="color:${col};font-weight:700">${pct}%</td></tr>`;
+  });
+  rh+='</tbody></table>';
+  document.getElementById('rankArea').innerHTML=rh;
+}
+function setSortRank(col){
+  window._rankSort=col;
+  renderRank();
+}
+
+// ─── CHART ────────────────────────────────────────────────
+function co(){return{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e2028',titleColor:'#e8eaf0',bodyColor:'#8b8fa8',borderColor:'#2a2d38',borderWidth:1,padding:10,callbacks:{label:c=>' '+(typeof c.raw==='number'?c.raw.toLocaleString():c.raw)}}},scales:{x:{grid:{color:'rgba(42,45,56,.4)'},ticks:{color:'#8b8fa8',font:{size:11}}},y:{grid:{color:'rgba(42,45,56,.4)'},ticks:{color:'#8b8fa8',font:{size:11}}}}};}
+function mkChart(id,cfg){if(charts[id])charts[id].destroy();charts[id]=new Chart(document.getElementById(id).getContext('2d'),cfg);}
+
+// ─── UTILS ────────────────────────────────────────────────
+function toArr(sh){return sh?XLSX.utils.sheet_to_json(sh,{header:1,raw:true}):[];}
+function pn(v){if(v===null||v===undefined||v==='')return 0;if(typeof v==='number')return Math.round(v);return Math.round(parseFloat(String(v).replace(/[,\s]/g,''))||0);}
+function pd(v){if(!v)return null;if(v instanceof Date)return isNaN(v)?null:v;if(typeof v==='number'){const p=XLSX.SSF.parse_date_code(v);return p?new Date(p.y,p.m-1,p.d):null;}const d=new Date(v);return isNaN(d)?null:d;}
+function dk(dt){return`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;}
+function fmt(n){if(!n||isNaN(n))return'—';if(n>=1000000)return(n/1000000).toFixed(2)+'M';if(n>=10000)return(n/10000).toFixed(1)+'萬';return n.toLocaleString();}
+function ff(n){return n?n.toLocaleString():'0';}
+function V(id,txt){document.getElementById(id).textContent=txt;}
+</script>
+</body>
+</html>
